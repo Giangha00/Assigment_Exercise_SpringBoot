@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary Management System - IASF</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Custom CSS matching exam paper screenshots -->
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+</head>
+<body>
+
+<div class="container main-container">
+
+    <!-- Card 1: User Form -->
+    <div class="panel-card">
+        <div class="panel-card-header">
+            <h2 class="panel-card-title">User</h2>
+        </div>
+        <div class="panel-card-body">
+
+            <!-- Success Alert Banner -->
+            <div th:if="${successMessage != null}" class="alert-custom-success" role="alert">
+                <span th:text="${successMessage}">User created successfully</span>
+            </div>
+
+            <!-- Error Alert Banner -->
+            <div th:if="${errorMessage != null}" class="alert-custom-danger" role="alert">
+                <span th:text="${errorMessage}">Error while creating User: Unable to create. A User with name Bob already exist</span>
+            </div>
+
+            <!-- User Form -->
+            <form th:action="@{/users/save}" th:object="${userForm}" method="post">
+                <!-- Hidden ID for Edit -->
+                <input type="hidden" th:field="*{id}" id="userId"/>
+
+                <!-- Hidden Department ID (defaulted if not present) -->
+                <input type="hidden" th:field="*{departmentId}" id="departmentId"/>
+
+                <!-- Row 1: Name -->
+                <div class="row mb-3 align-items-center">
+                    <label for="userName" class="col-sm-2 col-form-label form-label-custom">Name</label>
+                    <div class="col-sm-10">
+                        <input type="text"
+                               class="form-control form-control-custom"
+                               th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''"
+                               th:field="*{name}"
+                               id="userName"
+                               placeholder="Enter your name">
+                        <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-error">
+                            Name is required
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Age -->
+                <div class="row mb-3 align-items-center">
+                    <label for="userAge" class="col-sm-2 col-form-label form-label-custom">Age</label>
+                    <div class="col-sm-10">
+                        <input type="number"
+                               class="form-control form-control-custom"
+                               th:classappend="${#fields.hasErrors('age')} ? 'is-invalid' : ''"
+                               th:field="*{age}"
+                               id="userAge"
+                               placeholder="Enter your Age.">
+                        <div th:if="${#fields.hasErrors('age')}" th:errors="*{age}" class="text-error">
+                            Age is required
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Salary -->
+                <div class="row mb-4 align-items-center">
+                    <label for="userSalary" class="col-sm-2 col-form-label form-label-custom">Salary</label>
+                    <div class="col-sm-10">
+                        <input type="number"
+                               step="any"
+                               class="form-control form-control-custom"
+                               th:classappend="${#fields.hasErrors('salary')} ? 'is-invalid' : ''"
+                               th:field="*{salary}"
+                               id="userSalary"
+                               placeholder="Enter your Salary">
+                        <div th:if="${#fields.hasErrors('salary')}" th:errors="*{salary}" class="text-error">
+                            Salary is required
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Button Group (Right-aligned) -->
+                <div class="d-flex justify-content-end gap-2">
+                    <button th:if="${!isEdit}" type="submit" class="btn btn-custom-add">Add</button>
+                    <button th:if="${isEdit}" type="submit" class="btn btn-custom-update">Update</button>
+                    <button type="button" id="btnResetForm" class="btn btn-custom-reset">Reset Form</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Card 2: List of Users -->
+    <div class="panel-card">
+        <div class="panel-card-header">
+            <h2 class="panel-card-title">List of Users</h2>
+        </div>
+        <div class="panel-card-body">
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <form th:action="@{/users/search}" method="get" class="row g-2 align-items-center">
+                    <div class="col-auto">
+                        <label for="searchKeyword" class="form-label-custom mb-0">Search Employee:</label>
+                    </div>
+                    <div class="col-sm-5">
+                        <input type="text"
+                               name="keyword"
+                               id="searchKeyword"
+                               class="form-control form-control-custom"
+                               placeholder="Enter name to search..."
+                               th:value="${keyword}">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-custom-add">Search</button>
+                        <a th:href="@{/users}" class="btn btn-outline-secondary">Reset Search</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                    <tr>
+                        <th style="width: 10%;">ID</th>
+                        <th style="width: 30%;">NAME</th>
+                        <th style="width: 20%;">AGE</th>
+                        <th style="width: 20%;">SALARY</th>
+                        <th style="width: 20%; text-align: right;">ACTIONS</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(users)}">
+                        <td colspan="5" class="text-center text-muted py-4">No users found.</td>
+                    </tr>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.id}">1</td>
+                        <td th:text="${user.name}">Sam</td>
+                        <td th:text="${user.age}">30</td>
+                        <td th:text="${#numbers.formatDecimal(user.salary, 1, 'NONE', 0, 'POINT')}">70000</td>
+                        <td style="text-align: right;">
+                            <a th:href="@{/users/edit/{id}(id=${user.id})}"
+                               class="btn btn-custom-edit me-1">Edit</a>
+                            <a th:href="@{/users/delete/{id}(id=${user.id})}"
+                               class="btn btn-custom-remove btn-remove-user"
+                               th:data-username="${user.name}">Remove</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- jQuery & Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}" src="/js/main.js"></script>
+
+</body>
+</html>
